@@ -31,7 +31,7 @@ public class SwaggerController {
                 .put("description", "BulkSMS sandbox");
         ((ObjectNode) contract.path("info"))
                 .put("title", "BulkSMS Sandbox API")
-                .put("description", "Test the BulkSMS API against this gateway. Use the sandbox token ID and secret in Authorize. Outbound messages are delivered to the configured test inbox.");
+                .put("description", "This gateway is a local testing sandbox and is not an alternative to BulkSMS or its services. For official information and service requirements, visit https://www.bulksms.com/. Use the sandbox token ID and secret in Authorize. Outbound messages are delivered to the configured test inbox.");
         ((ObjectNode) contract.at("/components/securitySchemes/basicAuth"))
                 .put("description", "Use BULKSMS_TOKEN_ID as the username and BULKSMS_TOKEN_SECRET as the password.");
         return contract;

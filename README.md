@@ -1,6 +1,12 @@
 # BulkSMS mock gateway
 
-This Spring Boot sandbox implements the operations in the BulkSMS OpenAPI contract. Point the application under test at `http://localhost:8080/v1` and supply the sandbox API token ID and secret using HTTP Basic authentication. The gateway runs on loopback by default. It sends the SMS body and addressing details by Gmail SMTP to the configured inbox.
+This repository provides a local testing sandbox that mocks selected BulkSMS API behavior. It is for development and testing purposes only and does not claim to be, replace, or serve as an alternative to BulkSMS or its services. For official product information, service requirements, and support, visit [BulkSMS.com](https://www.bulksms.com/).
+
+## License
+
+This project is released under the [MIT License](LICENSE). If you have a licensing concern or objection, contact [nikhil8.jsg@gmail.com](mailto:nikhil8.jsg@gmail.com).
+
+Point the application under test at `http://localhost:8080/v1` and supply the sandbox API token ID and secret using HTTP Basic authentication. The gateway runs on loopback by default. It sends the SMS body and addressing details by Gmail SMTP to the configured inbox.
 
 ## Run locally
 
