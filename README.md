@@ -17,7 +17,7 @@ Use Java 21 or newer. In IntelliJ IDEA, select **BulkSMS Sandbox** from the run 
 | `SMS_EMAIL_TO` | The inbox that receives all SMS test emails. |
 | `GMAIL_APP_PASSWORD` | An app password for the Gmail account, without display spaces. [Google app password setup](https://support.google.com/accounts/answer/185833) |
 
-Optional settings include `PORT`, `SANDBOX_BIND_ADDRESS`, `SANDBOX_PUBLIC_BASE_URL`, and `SANDBOX_WEBHOOK_ORIGINS`. Flyway creates the tables and seeds the sandbox accounts on startup. The database user needs schema creation and read/write permissions.
+Optional settings include `PORT`, `SANDBOX_BIND_ADDRESS` for direct local launches, `SANDBOX_PUBLIC_BASE_URL`, and `SANDBOX_WEBHOOK_ORIGINS`. Flyway creates the tables and seeds the sandbox accounts on startup. The database user needs schema creation and read/write permissions.
 
 To start the gateway outside IntelliJ, set the same variables in PowerShell before running Maven.
 
@@ -42,16 +42,16 @@ Build the image from the project root. To include Swagger, put the optional Open
 
 ```powershell
 docker build -t bulksms-mock-gateway .
-docker run --rm --env-file .env -e SANDBOX_BIND_ADDRESS=0.0.0.0 -e PORT=8080 -p 127.0.0.1:8080:8080 bulksms-mock-gateway
+docker run --rm --env-file .env -e PORT=8080 -p 127.0.0.1:8080:8080 bulksms-mock-gateway
 ```
 
-Docker reads `.env` at runtime. Use plain `KEY=value` lines. The container connects to the configured MySQL server and Gmail SMTP.
+Docker reads `.env` at runtime. Use plain `KEY=value` lines. The image sets Spring's `SERVER_ADDRESS` to `0.0.0.0`. The container connects to the configured MySQL server and Gmail SMTP.
 
 ## Deploy on Render
 
-Push the project to a Git repository connected to Render. In the Render Dashboard, create a **Blueprint** from that repository. [`render.yaml`](render.yaml) creates a Docker web service, binds the gateway to Render's `PORT`, and uses `/healthz` to check that the sandbox database is reachable. [Render Blueprint setup](https://render.com/docs/infrastructure-as-code)
+Push the project to a Git repository connected to Render. In the Render Dashboard, create a **Blueprint** from that repository. [`render.yaml`](render.yaml) creates a Docker web service, binds the gateway to `0.0.0.0` on Render's `PORT`, and uses `/healthz` to check that the sandbox database is reachable. [Render Blueprint setup](https://render.com/docs/infrastructure-as-code)
 
-Enter `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `BULKSMS_TOKEN_ID`, `BULKSMS_TOKEN_SECRET`, `SMS_EMAIL_FROM`, `SMS_EMAIL_TO`, and `GMAIL_APP_PASSWORD` when Render prompts. For an existing service, add them under **Environment**. [Render environment variables](https://render.com/docs/configure-environment-variables)
+Enter `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `BULKSMS_TOKEN_ID`, `BULKSMS_TOKEN_SECRET`, `SMS_EMAIL_FROM`, `SMS_EMAIL_TO`, and `GMAIL_APP_PASSWORD` when Render prompts. For an existing service, add them under **Environment**. Render passes them to Spring as runtime environment variables. [Render environment variables](https://render.com/docs/configure-environment-variables)
 
 The Blueprint uses the paid 512 MB plan because free Render web services block outbound SMTP on port 587. If your database restricts inbound IPs, allow the outbound CIDR ranges listed under **Connect → Outbound** on the Render service. [SMTP restrictions](https://render.com/docs/free) · [Render outbound IPs](https://render.com/docs/outbound-ip-addresses)
 

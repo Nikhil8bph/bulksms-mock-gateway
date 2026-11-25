@@ -6,11 +6,16 @@ import jakarta.servlet.Filter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.SystemEnvironmentPropertySource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -18,10 +23,12 @@ import org.springframework.web.context.WebApplicationContext;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+import java.net.InetAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,6 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "sandbox.dispatch-delay=100",
         "RENDER_EXTERNAL_URL=https://gateway-example.onrender.com"
 })
+@ContextConfiguration(initializers = BulksmsMockGatewayApplicationTests.ContainerEnvironment.class)
 class BulksmsMockGatewayApplicationTests {
     private static final String AUTH = "Basic " + Base64.getEncoder()
             .encodeToString("local-token:local-secret".getBytes(StandardCharsets.UTF_8));
@@ -59,6 +67,17 @@ class BulksmsMockGatewayApplicationTests {
     WebhookClient webhooks;
 
     private MockMvc mvc;
+
+    static class ContainerEnvironment implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            applicationContext.getEnvironment().getPropertySources().addFirst(
+                    new SystemEnvironmentPropertySource("container-systemEnvironment", Map.of(
+                            "SERVER_ADDRESS", "0.0.0.0",
+                            "SANDBOX_BIND_ADDRESS", "127.0.0.1a",
+                            "PORT", "10000")));
+        }
+    }
 
     @BeforeEach
     void setUp() {
@@ -89,6 +108,13 @@ class BulksmsMockGatewayApplicationTests {
                 .andExpect(jsonPath("$.paths['/messages'].post.operationId").value("message.send"))
                 .andExpect(jsonPath("$.security[0].basicAuth").isArray())
                 .andExpect(jsonPath("$.components.securitySchemes.basicAuth.scheme").value("basic"));
+    }
+
+    @Test
+    void usesTheContainerAddressAndRenderPort() {
+        var binder = Binder.get(context.getEnvironment());
+        assertThat(binder.bind("server.address", InetAddress.class).get().isAnyLocalAddress()).isTrue();
+        assertThat(binder.bind("server.port", Integer.class).get()).isEqualTo(10000);
     }
 
     @Test

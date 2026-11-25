@@ -6,7 +6,7 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /healthz
     envVars:
-      - key: SANDBOX_BIND_ADDRESS
+      - key: SERVER_ADDRESS
         value: "0.0.0.0"
       - key: DB_URL
         sync: false

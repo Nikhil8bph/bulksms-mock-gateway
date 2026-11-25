@@ -10,7 +10,7 @@ WORKDIR /app
 
 COPY --from=build /workspace/target/bulksms-mock-gateway-*.jar /app/gateway.jar
 
-ENV SANDBOX_BIND_ADDRESS=0.0.0.0
+ENV SERVER_ADDRESS=0.0.0.0
 EXPOSE 8080
 # Render grants access to mounted secret files through group 1000.
 USER 10001:1000
