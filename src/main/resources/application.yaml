@@ -2,8 +2,8 @@ spring:
   application:
     name: bulksms-mock-gateway
   datasource:
-    url: "${DB_URL:jdbc:mysql://bulksms-mock-db-nikhil-17a1.k.aivencloud.com:21493/defaultdb?sslMode=REQUIRED}"
-    username: "${DB_USERNAME:avnadmin}"
+    url: "${DB_URL}"
+    username: "${DB_USERNAME}"
     password: "${DB_PASSWORD}"
   jpa:
     open-in-view: false

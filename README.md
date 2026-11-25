@@ -8,6 +8,8 @@ Use Java 21 or newer. In IntelliJ IDEA, select **BulkSMS Sandbox** from the run 
 
 | Variable | Value |
 | --- | --- |
+| `DB_URL` | MySQL JDBC URL, for example `jdbc:mysql://db.example.com:3306/sandbox?sslMode=REQUIRED`. |
+| `DB_USERNAME` | MySQL username. |
 | `DB_PASSWORD` | Password for the MySQL user. |
 | `BULKSMS_TOKEN_ID` | A token ID you choose for this sandbox. |
 | `BULKSMS_TOKEN_SECRET` | A secret you choose for the sandbox token. |
@@ -15,7 +17,7 @@ Use Java 21 or newer. In IntelliJ IDEA, select **BulkSMS Sandbox** from the run 
 | `SMS_EMAIL_TO` | The inbox that receives all SMS test emails. |
 | `GMAIL_APP_PASSWORD` | An app password for the Gmail account, without display spaces. [Google app password setup](https://support.google.com/accounts/answer/185833) |
 
-Optional settings include `DB_URL`, `DB_USERNAME`, `PORT`, `SANDBOX_BIND_ADDRESS`, `SANDBOX_PUBLIC_BASE_URL`, and `SANDBOX_WEBHOOK_ORIGINS`. The defaults use `avnadmin` and the supplied Aiven database at `jdbc:mysql://bulksms-mock-db-nikhil-17a1.k.aivencloud.com:21493/defaultdb?sslMode=REQUIRED`. To use another MySQL instance, set `DB_URL` to its JDBC URL. Flyway creates the tables and seeds the sandbox accounts on startup. The database user needs schema creation and read/write permissions.
+Optional settings include `PORT`, `SANDBOX_BIND_ADDRESS`, `SANDBOX_PUBLIC_BASE_URL`, and `SANDBOX_WEBHOOK_ORIGINS`. Flyway creates the tables and seeds the sandbox accounts on startup. The database user needs schema creation and read/write permissions.
 
 To start the gateway outside IntelliJ, set the same variables in PowerShell before running Maven.
 
@@ -49,9 +51,9 @@ Docker reads `.env` at runtime. Use plain `KEY=value` lines. The container conne
 
 Push the project to a Git repository connected to Render. In the Render Dashboard, create a **Blueprint** from that repository. [`render.yaml`](render.yaml) creates a Docker web service, binds the gateway to Render's `PORT`, and uses `/healthz` to check that the sandbox database is reachable. [Render Blueprint setup](https://render.com/docs/infrastructure-as-code)
 
-Enter `DB_PASSWORD`, `BULKSMS_TOKEN_ID`, `BULKSMS_TOKEN_SECRET`, `SMS_EMAIL_FROM`, `SMS_EMAIL_TO`, and `GMAIL_APP_PASSWORD` when Render prompts. For an existing service, add them under **Environment**. Set `DB_URL` and `DB_USERNAME` there if you use a different MySQL connection. [Render environment variables](https://render.com/docs/configure-environment-variables)
+Enter `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `BULKSMS_TOKEN_ID`, `BULKSMS_TOKEN_SECRET`, `SMS_EMAIL_FROM`, `SMS_EMAIL_TO`, and `GMAIL_APP_PASSWORD` when Render prompts. For an existing service, add them under **Environment**. [Render environment variables](https://render.com/docs/configure-environment-variables)
 
-The Blueprint uses the paid 512 MB plan because free Render web services block outbound SMTP on port 587. If Aiven restricts inbound IPs, allow the outbound CIDR ranges listed under **Connect → Outbound** on the Render service. [SMTP restrictions](https://render.com/docs/free) · [Render outbound IPs](https://render.com/docs/outbound-ip-addresses)
+The Blueprint uses the paid 512 MB plan because free Render web services block outbound SMTP on port 587. If your database restricts inbound IPs, allow the outbound CIDR ranges listed under **Connect → Outbound** on the Render service. [SMTP restrictions](https://render.com/docs/free) · [Render outbound IPs](https://render.com/docs/outbound-ip-addresses)
 
 After deployment, use the service's HTTPS URL with `/v1` for API requests. Attachment links use `RENDER_EXTERNAL_URL`; set `SANDBOX_PUBLIC_BASE_URL` if you want them to use a custom domain. [Render default environment variables](https://render.com/docs/environment-variables)
 
