@@ -1,0 +1,436 @@
+openapi: 3.0.3
+info:
+  title: BulkSMS Sandbox API
+  version: 1.1.0
+servers:
+  - url: /v1
+security:
+  - basicAuth: []
+
+paths:
+  /messages:
+    get:
+      tags: [Messages]
+      operationId: message.list
+      summary: List messages
+      parameters:
+        - name: filter
+          in: query
+          description: Combine filters with an ampersand. Supported fields include id, type, submission.id, submission.date, status.type, status.id, and userSuppliedId.
+          schema: {type: string}
+          example: type=SENT
+        - name: sortOrder
+          in: query
+          schema: {type: string, enum: [ASCENDING, DESCENDING], default: DESCENDING}
+        - name: limit
+          in: query
+          schema: {type: integer, minimum: 1, default: 1000}
+      responses:
+        '200': {$ref: '#/components/responses/Messages'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      tags: [Messages]
+      operationId: message.send
+      summary: Submit one or more messages
+      description: Messages are queued for email delivery to the configured test inbox.
+      parameters:
+        - name: auto-unicode
+          in: query
+          schema: {type: boolean, default: false}
+        - name: schedule-date
+          in: query
+          schema: {type: string, format: date-time}
+        - name: schedule-description
+          in: query
+          schema: {type: string}
+        - $ref: '#/components/parameters/DeduplicationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/SubmissionRequest'
+                - type: array
+                  maxItems: 50000
+                  items: {$ref: '#/components/schemas/SubmissionRequest'}
+            example: {to: '+447700900001', body: Sandbox SMS test}
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [to, body]
+              properties:
+                to: {type: string, example: '+447700900001'}
+                body: {type: string, example: Sandbox SMS test}
+      responses:
+        '201': {$ref: '#/components/responses/Messages'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /messages/send:
+    get:
+      tags: [Messages]
+      operationId: message.send.simple.get
+      summary: Submit a message using query parameters
+      parameters:
+        - {name: to, in: query, required: true, schema: {type: string}, example: '+447700900001'}
+        - {name: body, in: query, required: true, schema: {type: string}, example: Sandbox SMS test}
+        - $ref: '#/components/parameters/DeduplicationId'
+      responses:
+        '201': {$ref: '#/components/responses/Messages'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /messages/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Messages]
+      operationId: message.show
+      summary: Get a message
+      responses:
+        '200':
+          description: Message details
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Message'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /messages/{id}/relatedReceivedMessages:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Messages]
+      operationId: message.related.received
+      summary: List replies to a message
+      responses:
+        '200': {$ref: '#/components/responses/Messages'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /profile:
+    get:
+      tags: [Account]
+      operationId: profile.show
+      summary: Get the sandbox profile and balance
+      responses:
+        '200':
+          description: Profile details
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Profile'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /credit/transfer:
+    post:
+      tags: [Account]
+      operationId: credit.transfer
+      summary: Transfer sandbox credits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreditTransfer'}
+            example: {toUsername: sandbox-recipient, toUserId: 2, credits: 1}
+      responses:
+        '200': {description: Credits transferred}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /webhooks:
+    get:
+      tags: [Webhooks]
+      operationId: webhook.list
+      summary: List webhooks
+      responses:
+        '200':
+          description: Configured webhooks
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/Webhook'}}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      tags: [Webhooks]
+      operationId: webhook.create
+      summary: Create a webhook
+      requestBody: {$ref: '#/components/requestBodies/Webhook'}
+      responses:
+        '200': {$ref: '#/components/responses/Webhook'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /webhooks/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Webhooks]
+      operationId: webhook.show
+      summary: Get a webhook
+      responses:
+        '200': {$ref: '#/components/responses/Webhook'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    post:
+      tags: [Webhooks]
+      operationId: webhook.update
+      summary: Update a webhook
+      requestBody: {$ref: '#/components/requestBodies/Webhook'}
+      responses:
+        '200': {$ref: '#/components/responses/Webhook'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    delete:
+      tags: [Webhooks]
+      operationId: webhook.delete
+      summary: Delete a webhook
+      responses:
+        '200': {description: Webhook deleted}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /blocked-numbers:
+    get:
+      tags: [Blocked numbers]
+      operationId: blocked.list
+      summary: List blocked numbers
+      parameters:
+        - {name: min-id, in: query, schema: {type: integer, minimum: 0, default: 0}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 10000, default: 10000}}
+      responses:
+        '200':
+          description: Blocked numbers
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/BlockedNumber'}}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      tags: [Blocked numbers]
+      operationId: blocked.create
+      summary: Block one or more numbers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: array, maxItems: 1000, items: {type: string}}
+            example: ['+447700900002']
+      responses:
+        '200': {description: Numbers blocked}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /rmm/pre-sign-attachment:
+    post:
+      tags: [Attachments]
+      operationId: attachment.presign
+      summary: Get attachment upload and download URLs
+      description: Send the file to putUrl using PUT and the headers in fields. Use fetchUrl in the SMS body.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fileExtension: {type: string, example: txt}
+                mediaType: {type: string, example: text/plain}
+      responses:
+        '200':
+          description: Signed URLs and upload headers
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PreSignedAttachment'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+
+components:
+  securitySchemes:
+    basicAuth: {type: http, scheme: basic}
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: {type: string}
+      example: '1'
+    DeduplicationId:
+      name: deduplication-id
+      in: query
+      schema: {type: integer, format: int32}
+  requestBodies:
+    Webhook:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/WebhookRequest'}
+          example: {name: Example webhook, url: 'http://localhost:9000/sms', triggerScope: SENT, active: false}
+  responses:
+    Messages:
+      description: Message records
+      content:
+        application/json:
+          schema: {type: array, items: {$ref: '#/components/schemas/Message'}}
+    Webhook:
+      description: Webhook details
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Webhook'}
+    BadRequest:
+      description: Invalid input
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ApiError'}
+    Unauthorized:
+      description: Supply the sandbox token ID and secret
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ApiError'}
+    Forbidden:
+      description: Insufficient credits or daily quota
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ApiError'}
+    NotFound:
+      description: Record not found
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ApiError'}
+  schemas:
+    SubmissionRequest:
+      type: object
+      required: [to, body]
+      properties:
+        from:
+          oneOf:
+            - type: string
+            - type: object
+              required: [type]
+              properties:
+                type: {type: string, enum: [INTERNATIONAL, REPLIABLE, ALPHANUMERIC, SHORTCODE]}
+                address: {type: string}
+        to:
+          oneOf:
+            - type: string
+            - $ref: '#/components/schemas/Recipient'
+            - type: array
+              items: {type: string}
+            - type: array
+              items: {$ref: '#/components/schemas/Recipient'}
+        body: {type: string}
+        routingGroup: {type: string, enum: [ECONOMY, STANDARD, PREMIUM], default: STANDARD}
+        encoding: {type: string, enum: [TEXT, UNICODE, BINARY], default: TEXT}
+        longMessageMaxParts: {type: integer}
+        userSuppliedId: {type: string, maxLength: 20}
+        protocolId:
+          oneOf: [{type: integer}, {type: string}]
+        messageClass:
+          oneOf: [{type: integer}, {type: string}]
+        deliveryReports: {type: string, enum: [ALL, ERRORS, NONE], default: ALL}
+    Recipient:
+      type: object
+      properties:
+        type: {type: string, enum: [INTERNATIONAL, GROUP], default: INTERNATIONAL}
+        address: {type: string}
+        name: {type: string}
+        id: {type: string}
+        fields: {type: array, items: {type: string}}
+    Message:
+      type: object
+      properties:
+        id: {type: string}
+        type: {type: string, enum: [SENT, RECEIVED]}
+        from: {type: string}
+        to: {type: string}
+        body: {type: string}
+        encoding: {type: string}
+        protocolId: {type: integer}
+        messageClass: {type: integer}
+        numberOfParts: {type: integer}
+        creditCost: {type: number}
+        submission:
+          type: object
+          properties:
+            id: {type: string}
+            date: {type: string, format: date-time}
+        status:
+          type: object
+          properties:
+            id: {type: string, example: DELIVERED.null}
+            type: {type: string, example: DELIVERED}
+            subtype: {type: string, nullable: true}
+        relatedSentMessageId: {type: string, nullable: true}
+        userSuppliedId: {type: string, nullable: true}
+    WebhookRequest:
+      type: object
+      required: [name, url, triggerScope]
+      properties:
+        name: {type: string}
+        url: {type: string, format: uri}
+        contactEmailAddress: {type: string, format: email, nullable: true}
+        triggerScope: {type: string, enum: [SENT, RECEIVED]}
+        invokeOption: {type: string, enum: [ONE, MANY], default: ONE}
+        active: {type: boolean, default: true}
+        onWebApp: {type: boolean, default: true}
+    Webhook:
+      allOf:
+        - $ref: '#/components/schemas/WebhookRequest'
+        - type: object
+          properties:
+            id: {type: integer, format: int64}
+    BlockedNumber:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        phoneNumber: {type: string}
+        created: {type: string, format: date-time}
+        description: {type: string, nullable: true}
+    Profile:
+      type: object
+      properties:
+        id: {type: string}
+        username: {type: string}
+        created: {type: string, format: date-time}
+        credits:
+          type: object
+          properties:
+            balance: {type: number}
+            limit: {type: integer}
+            isTransferAllowed: {type: boolean}
+        quota:
+          type: object
+          properties:
+            size: {type: integer}
+            remaining: {type: integer}
+        originAddresses:
+          type: object
+          properties:
+            isFullControlAllowed: {type: boolean}
+            allowed: {type: array, items: {type: string}}
+    CreditTransfer:
+      type: object
+      required: [toUsername, toUserId, credits]
+      properties:
+        toUsername: {type: string}
+        toUserId: {type: integer, format: int64}
+        credits: {type: number}
+        commentOnFrom: {type: string, maxLength: 100}
+        commentOnTo: {type: string, maxLength: 100}
+    PreSignedAttachment:
+      type: object
+      properties:
+        putUrl: {type: string, format: uri}
+        fetchUrl: {type: string, format: uri}
+        fields:
+          type: array
+          items:
+            type: object
+            properties:
+              name: {type: string}
+              value: {type: string}
+    ApiError:
+      type: object
+      properties:
+        type: {type: string}
+        title: {type: string}
+        status: {type: integer}
+        detail: {type: string}

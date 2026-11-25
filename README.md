@@ -25,7 +25,7 @@ To start the gateway outside IntelliJ, set the same variables in PowerShell befo
 .\mvnw.cmd spring-boot:run
 ```
 
-To use Swagger on a fresh checkout, place `bulksms-api-specification-docs.yaml` in the project root before building. Git ignores the local copy. Open Swagger UI at [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html). Choose **Authorize** and enter your `BULKSMS_TOKEN_ID` and `BULKSMS_TOKEN_SECRET` as the username and password. **Try it out** sends requests to the local gateway. The OpenAPI JSON is available at `/v3/api-docs`.
+The gateway includes a sandbox OpenAPI definition. Open Swagger UI at [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html). Choose **Authorize** and enter your `BULKSMS_TOKEN_ID` and `BULKSMS_TOKEN_SECRET` as the username and password. **Try it out** sends requests to the local gateway. The OpenAPI JSON is available at `/v3/api-docs`.
 
 Submit and retrieve an SMS using the same authentication format as BulkSMS.
 
@@ -38,7 +38,7 @@ curl.exe --user $sandboxToken "http://localhost:8080/v1/messages"
 
 ## Run with Docker
 
-Build the image from the project root. To include Swagger, put the optional OpenAPI YAML in the root before building.
+Build the image from the project root. Swagger is included.
 
 ```powershell
 docker build -t bulksms-mock-gateway .
@@ -57,7 +57,7 @@ The Blueprint uses the paid 512 MB plan because free Render web services block o
 
 After deployment, use the service's HTTPS URL with `/v1` for API requests. Attachment links use `RENDER_EXTERNAL_URL`; set `SANDBOX_PUBLIC_BASE_URL` if you want them to use a custom domain. [Render default environment variables](https://render.com/docs/environment-variables)
 
-For hosted Swagger, add the local OpenAPI YAML as a Render **Secret File** named `render-openapi.yaml`. Set `SANDBOX_OPENAPI_SPEC` to `file:/etc/secrets/render-openapi.yaml` and redeploy. Open `/swagger-ui.html` on the service. The Swagger page serves the supplied contract publicly and API requests still require the sandbox token. [Runtime secret files on Render](https://render.com/docs/docker-secrets#accessing-secret-files-at-runtime)
+Open `/swagger-ui.html` on the Render service to use the bundled definition. To use a custom definition, add it as a Render **Secret File** named `render-openapi.yaml`, set `SANDBOX_OPENAPI_SPEC` to `file:/etc/secrets/render-openapi.yaml`, and redeploy. The Swagger page serves the selected definition publicly and API requests still require the sandbox token. [Runtime secret files on Render](https://render.com/docs/docker-secrets#accessing-secret-files-at-runtime)
 
 ## Sandbox behavior
 

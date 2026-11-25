@@ -1,7 +1,7 @@
 package com.example.bulksmsmockgateway.controller;
 
-import com.example.bulksmsmockgateway.exception.ApiException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -17,7 +17,8 @@ public class SwaggerController {
     private final ObjectNode contract;
 
     public SwaggerController(@Value("${sandbox.openapi-spec}") Resource source) throws IOException {
-        contract = source.exists() ? loadContract(source) : null;
+        Resource bundled = new ClassPathResource("openapi/bulksms-sandbox.yaml");
+        contract = loadContract(source.exists() ? source : bundled);
     }
 
     private static ObjectNode loadContract(Resource source) throws IOException {
@@ -44,9 +45,6 @@ public class SwaggerController {
     @GetMapping(value = "/v3/api-docs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     ObjectNode openApi() {
-        if (contract == null) {
-            throw ApiException.missing("Set SANDBOX_OPENAPI_SPEC to a readable OpenAPI file, or add bulksms-api-specification-docs.yaml to the project root and rebuild.");
-        }
         return contract;
     }
 }

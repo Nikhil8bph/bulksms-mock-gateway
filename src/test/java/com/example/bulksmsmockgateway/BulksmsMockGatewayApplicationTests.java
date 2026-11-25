@@ -11,7 +11,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.SystemEnvironmentPropertySource;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -87,7 +86,7 @@ class BulksmsMockGatewayApplicationTests {
     }
 
     @Test
-    void servesSwaggerUiAndUsesTheLocalContractWhenPresent() throws Exception {
+    void servesSwaggerUiAndTheApiDefinitionWithoutCredentials() throws Exception {
         mvc.perform(get("/swagger-ui.html"))
                 .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/swagger-ui/index.html"));
         mvc.perform(get("/swagger-ui/index.html"))
@@ -96,13 +95,7 @@ class BulksmsMockGatewayApplicationTests {
                 .andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("../v3/api-docs")));
         mvc.perform(get("/webjars/swagger-ui/swagger-ui.css")).andExpect(status().isOk());
         mvc.perform(get("/webjars/swagger-ui/swagger-ui-bundle.js")).andExpect(status().isOk());
-        var apiDocs = mvc.perform(get("/v3/api-docs"));
-        if (!new ClassPathResource("bulksms-api-specification-docs.yaml").exists()) {
-            apiDocs.andExpect(status().isNotFound())
-                    .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("bulksms-api-specification-docs.yaml")));
-            return;
-        }
-        apiDocs.andExpect(status().isOk())
+        mvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.servers.length()").value(1))
                 .andExpect(jsonPath("$.servers[0].url").value("/v1"))
                 .andExpect(jsonPath("$.paths['/messages'].post.operationId").value("message.send"))

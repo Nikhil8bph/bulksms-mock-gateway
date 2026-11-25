@@ -28,6 +28,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -47,7 +48,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.jpa.properties.hibernate.generate_statistics=true",
         "sandbox.email-from=from@example.test", "sandbox.email-to=to@example.test",
         "sandbox.token-id=local-token", "sandbox.token-secret=local-secret",
-        "sandbox.dispatch-enabled=false"
+        "sandbox.dispatch-enabled=false",
+        "SANDBOX_OPENAPI_SPEC=classpath:missing-vendor-contract.yaml"
 })
 @Sql(statements = {
         "delete from sms_webhook_delivery", "delete from sms_webhook", "delete from sms_message",
@@ -90,6 +92,31 @@ class GatewayContractRegressionTests {
         when(webhooks.deliver(any(), any())).thenReturn(new WebhookClient.Result(204, 0));
         mvc = MockMvcBuilders.webAppContextSetup(context).addFilters(springSecurityFilterChain).build();
         worker = new DeliveryWorker(deliveries, gmail, webhooks, mapper, json, clock, attachments);
+    }
+
+    @Test
+    void publishesAllSandboxOperationsWithoutTheVendorFile() throws Exception {
+        JsonNode contract = response(mvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.servers[0].url").value("/v1"))
+                .andExpect(jsonPath("$.components.securitySchemes.basicAuth.scheme").value("basic"))
+                .andExpect(jsonPath("$.security[0].basicAuth").isArray()));
+        JsonNode paths = contract.path("paths");
+        List<String> operationIds = new ArrayList<>();
+        for (JsonNode path : paths) {
+            for (JsonNode operation : path) {
+                if (operation.has("operationId")) {
+                    operationIds.add(operation.path("operationId").asString());
+                }
+            }
+        }
+        assertThat(operationIds).containsExactlyInAnyOrder(
+                "message.list", "message.send", "message.send.simple.get", "message.show", "message.related.received",
+                "profile.show", "credit.transfer", "webhook.list", "webhook.create", "webhook.show", "webhook.update",
+                "webhook.delete", "blocked.list", "blocked.create", "attachment.presign");
+        JsonNode example = paths.path("/messages").path("post").at("/requestBody/content/application~1json/example");
+        mvc.perform(post("/v1/messages").header("Authorization", AUTH).contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(example)))
+                .andExpect(status().isCreated());
     }
 
     @Test
