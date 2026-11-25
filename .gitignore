@@ -1,0 +1,49 @@
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+
+# Local copy of the vendor OpenAPI contract
+/bulksms-api-specification-docs.yaml
+
+# Maven and Java build output
+/target/
+/build/
+/out/
+/.mvn/wrapper/maven-wrapper.jar
+/HELP.md
+*.class
+
+# Runtime logs and JVM dumps
+/logs/
+*.log
+*.hprof
+
+# IntelliJ IDEA (shared run configurations live in .run/)
+/.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse and Spring Tool Suite
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+/.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

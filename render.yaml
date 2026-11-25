@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: bulksms-mock-gateway
+    runtime: docker
+    plan: "0.5c-512mb"
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      - key: SANDBOX_BIND_ADDRESS
+        value: "0.0.0.0"
+      - key: DB_PASSWORD
+        sync: false
+      - key: BULKSMS_TOKEN_ID
+        sync: false
+      - key: BULKSMS_TOKEN_SECRET
+        sync: false
+      - key: SMS_EMAIL_FROM
+        sync: false
+      - key: SMS_EMAIL_TO
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false

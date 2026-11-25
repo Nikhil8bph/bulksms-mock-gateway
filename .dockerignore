@@ -1,0 +1,10 @@
+**
+!pom.xml
+!src
+src/**
+!src/main
+!src/main/**
+!bulksms-api-specification-docs.yaml
+
+**/.env
+**/.env.*
